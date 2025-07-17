@@ -56,7 +56,7 @@ func (p *Policy) Pretty() string {
 
 // Apply publishes policy to NATS where components subscribe and update.
 func Apply(ctx context.Context, cfg *config.Config, logger log.Logger, p *Policy) error {
-	conn, err := natsjs.Connect(ctx, cfg.NATS.URLs, nats.Name("riskr-policy-apply"))
+	conn, err := natsjs.Connect(ctx, cfg.NATS.URLs, nats.Name(natsjs.SubjPolicyApply))
 	if err != nil {
 		return err
 	}

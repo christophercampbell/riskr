@@ -1,9 +1,10 @@
 package main
 
 import (
+	"github.com/christophercampbell/riskr/internal/cli"
 	"os"
 )
 
 func main() {
-	os.Exit(Run(os.Args[1:]))
+	os.Exit(cli.Run(os.Args[1:]))
 }

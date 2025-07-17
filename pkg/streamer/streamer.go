@@ -35,6 +35,13 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	if err != nil {
 		return err
 	}
+	js, err := natsjs.JetStream(nc)
+	if err != nil {
+		return err
+	}
+	if err = natsjs.Bootstrap(js); err != nil {
+		return err
+	}
 
 	// load sanctions + policy (same as gateway for now)
 	p, err := policy.LoadFile(cfg.Policy.File)
@@ -43,10 +50,17 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	}
 	sanctions, _ := loadSanctions(cfg.Sanctions.File) // ignore err for now
 
-	w := &Worker{cfg: cfg, log: logger, nc: nc, state: state.NewMem(), rulez: rules.BuildRules(p, sanctions, p.Params), policyVersion: p.Version}
+	w := &Worker{
+		cfg:           cfg,
+		log:           logger,
+		nc:            nc,
+		state:         state.NewMem(),
+		rulez:         rules.BuildRules(p, sanctions, p.Params),
+		policyVersion: p.Version,
+	}
 
 	// subscribe to policy apply
-	_, err = natsjs.SubscribeEphemeral(ctx, nc, natsjs.SubjPolicyApply, func(m *nats.Msg) {
+	_, err = natsjs.SubscribeDurable(ctx, js, natsjs.SubjPolicyApply, "riskr_streamer_policy_apply", true, func(m *nats.Msg) {
 		var np policy.Policy
 		if err := json.Unmarshal(m.Data, &np); err != nil {
 			logger.Error("policy sub", "err", err)
@@ -61,7 +75,7 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	}
 
 	// subscribe to tx events
-	_, err = natsjs.SubscribeEphemeral(ctx, nc, natsjs.SubjTxEvent, func(m *nats.Msg) {
+	_, err = natsjs.SubscribeDurable(ctx, js, natsjs.SubjTxEvent, "riskr_streamer_tx", true, func(m *nats.Msg) {
 		var te events.TxEvent
 		if err := te.Unmarshal(m.Data); err != nil {
 			logger.Error("tx unmarshal", "err", err)
@@ -74,7 +88,7 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	}
 
 	// subscribe to provisional decisions
-	_, err = natsjs.SubscribeEphemeral(ctx, nc, natsjs.SubjDecisionProv, func(m *nats.Msg) {
+	_, err = natsjs.SubscribeDurable(ctx, js, natsjs.SubjDecisionProv, "riskr_streamer_decprov", true, func(m *nats.Msg) {
 		var de events.DecisionEvent
 		if err := de.Unmarshal(m.Data); err != nil {
 			logger.Error("prov unmarshal", "err", err)

@@ -150,6 +150,7 @@ func SubscribeDurable(
 
 // EnsureDurableConsumer (helper) creates or updates a durable pull consumer.
 // Use from gateway/streamer services so each has its own durable cursor.
+// TODO
 func EnsureDurableConsumer(js nats.JetStreamContext, stream, durable, filter string, ackWait time.Duration, maxAckPending int) error {
 	cfg := &nats.ConsumerConfig{
 		Durable:           durable,
@@ -165,6 +166,7 @@ func EnsureDurableConsumer(js nats.JetStreamContext, stream, durable, filter str
 }
 
 // PublishJSON marshals v and publishes to subj via JetStream.
+// TODO for using durable publishing
 func PublishJSON(js nats.JetStreamContext, subj string, v any) (*nats.PubAck, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
@@ -213,13 +215,3 @@ func ensureConsumer(js nats.JetStreamContext, stream string, cfg *nats.ConsumerC
 	}
 	return nil
 }
-
-// -----------------------------------------------------------------------------
-// Backwards-compat shim exports (in case other packages used older names)
-// -----------------------------------------------------------------------------
-
-// EnsureStreams == Bootstrap (legacy name safety).
-func EnsureStreams(js nats.JetStreamContext) error { return Bootstrap(js) }
-
-// EnsureCoreStreams == Bootstrap (older scaffold alias).
-func EnsureCoreStreams(js nats.JetStreamContext) error { return Bootstrap(js) }

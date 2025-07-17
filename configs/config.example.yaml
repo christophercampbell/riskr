@@ -1,0 +1,22 @@
+# Global riskr configuration (edit as needed)
+log_level: info
+nats:
+  urls: ["nats://localhost:4222"]
+  # auto stream creation toggles
+  ensure_streams: true
+http:
+  listen_addr: ":8080"
+  read_timeout_ms: 5000
+  write_timeout_ms: 5000
+policy:
+  # initial policy file path (used by gateway/streamer on startup)
+  file: "./configs/policy.example.yaml"
+sanctions:
+  file: "./configs/sanctions.example.txt"
+assets:
+  # static USD conversion factors (MVP); use float or string
+  USDC: 1.00
+  USDT: 1.00
+  WETH: 3000.00
+  BTC: 65000.00
+latency_budget_ms: 100

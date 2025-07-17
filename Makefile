@@ -27,6 +27,6 @@ fmt:
 	$(GO) fmt $(PKG)
 
 lint:
-	@echo "TODO: add golangci-lint"
+	golangci-lint run
 
 .PHONY: build clean run-gateway run-streamer sim policy-apply fmt lint

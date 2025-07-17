@@ -6,7 +6,7 @@ PKG := ./...
 .DEFAULT_GOAL := build
 
 build:
-	$(GO) build -o $(BINDIR)/riskr ./cmd/riskr
+	$(GO) build -o $(BINDIR)/riskr ./cmd
 
 clean:
 	rm -rf $(BINDIR)

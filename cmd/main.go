@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/christophercampbell/riskr/internal/cli"
+	"github.com/christophercampbell/riskr/cmd/cli"
 	"os"
 )
 

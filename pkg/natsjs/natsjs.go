@@ -92,9 +92,9 @@ func Bootstrap(js nats.JetStreamContext) error {
 	return nil
 }
 
-// SubscribeCtx wraps nc.Subscribe and cancels on ctx.Done().
+// SubscribeEphemeral wraps nc.Subscribe and cancels on ctx.Done().
 // Use for core NATS (non-JetStream) subjects.
-func SubscribeCtx(ctx context.Context, nc *nats.Conn, subj string, cb nats.MsgHandler) (*nats.Subscription, error) {
+func SubscribeEphemeral(ctx context.Context, nc *nats.Conn, subj string, cb nats.MsgHandler) (*nats.Subscription, error) {
 	sub, err := nc.Subscribe(subj, cb)
 	if err != nil {
 		return nil, err
@@ -107,10 +107,10 @@ func SubscribeCtx(ctx context.Context, nc *nats.Conn, subj string, cb nats.MsgHa
 	return sub, nil
 }
 
-// JSSubscribeCtx creates or attaches to a durable JetStream consumer and
+// SubscribeDurable creates or attaches to a durable JetStream consumer and
 // drains it when ctx cancels. Handler is called for each message; handler
 // must Ack or Nak (we auto-Ack after handler returns if autoAck==true).
-func JSSubscribeCtx(
+func SubscribeDurable(
 	ctx context.Context,
 	js nats.JetStreamContext,
 	subj string,

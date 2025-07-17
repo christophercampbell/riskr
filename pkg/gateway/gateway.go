@@ -51,7 +51,7 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 
 	s := &Server{cfg: cfg, log: logger, nc: nc, rulez: rules.BuildRules(p, sanctions, p.Params), policyVersion: p.Version}
 
-	_, err = natsjs.SubscribeCtx(ctx, nc, natsjs.SubjPolicyBroadcast, func(m *nats.Msg) {
+	_, err = natsjs.SubscribeEphemeral(ctx, nc, natsjs.SubjPolicyBroadcast, func(m *nats.Msg) {
 		var np policy.Policy
 		if err := json.Unmarshal(m.Data, &np); err != nil {
 			logger.Error("policy sub", "err", err)

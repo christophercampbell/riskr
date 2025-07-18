@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/nats-io/nats.go"
 	"time"
@@ -17,7 +18,37 @@ import (
 	"github.com/christophercampbell/riskr/pkg/natsjs"
 )
 
+const (
+	CLEAN       = "clean"
+	OFAC        = "ofac"
+	DAILY       = "daily"
+	STRUCTURING = "structuring"
+)
+
+var (
+	ValidScenarios = map[string]struct{}{
+		CLEAN:       {},
+		OFAC:        {},
+		DAILY:       {},
+		STRUCTURING: {},
+	}
+)
+
+func GetValidScenarios() []string {
+	var validScenarios []string
+	for scenario := range ValidScenarios {
+		validScenarios = append(validScenarios, scenario)
+	}
+	return validScenarios
+}
+
 func Run(ctx context.Context, cfg *config.Config, logger log.Logger, scenario string) error {
+	if _, valid := ValidScenarios[scenario]; !valid {
+		validScenarios := GetValidScenarios()
+		msg := fmt.Sprintf("invalid scenario. got %v, expected one of %v", scenario, validScenarios)
+		return errors.New(msg)
+	}
+
 	nc, err := natsjs.Connect(ctx, cfg.NATS.URLs, nats.Name("riskr-sim"))
 	if err != nil {
 		return err

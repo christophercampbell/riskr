@@ -70,7 +70,7 @@ func (c *Config) JSON() string {
 	return string(b)
 }
 
-func (c *Config) PolicyFile() string {
+func (c *Config) ResolvePolicyFile() string {
 	filepath := c.Policy.File
 	if !path.IsAbs(filepath) {
 		filepath = path.Join(c.configRoot, filepath)

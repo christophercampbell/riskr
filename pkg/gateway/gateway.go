@@ -42,7 +42,7 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	}
 
 	// load policy
-	p, err := policy.LoadFile(cfg.PolicyFile())
+	p, err := policy.LoadFile(cfg.ResolvePolicyFile())
 	if err != nil {
 		return err
 	}

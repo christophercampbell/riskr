@@ -44,7 +44,7 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	}
 
 	// load sanctions + policy (same as gateway for now)
-	p, err := policy.LoadFile(cfg.Policy.File)
+	p, err := policy.LoadFile(cfg.ResolvePolicyFile())
 	if err != nil {
 		return err
 	}

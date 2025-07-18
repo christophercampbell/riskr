@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/christophercampbell/riskr/pkg/log"
 	"github.com/christophercampbell/riskr/pkg/policy"
 	"github.com/urfave/cli/v2"
 )
 
 func policyApply(cli *cli.Context) error {
-	cfg, err := loadConfig(cli)
+	cfg, logger, err := load(cli)
 	if err != nil {
 		return err
 	}
@@ -17,7 +16,6 @@ func policyApply(cli *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	logger := log.New(cfg.LogLevel)
 	if err = policy.Apply(cli.Context, cfg, logger, p); err != nil {
 		return err
 	}
@@ -27,18 +25,17 @@ func policyApply(cli *cli.Context) error {
 
 func policyList(cli *cli.Context) error {
 	// TODO: implement me
-	cfg, err := loadConfig(cli)
+	_, logger, err := load(cli)
 	if err != nil {
 		return err
 	}
-	logger := log.New(cfg.LogLevel)
 	logger.Warn("policy list: remote query not yet implemented")
 	return nil
 }
 
 func policyPrint(cli *cli.Context) error {
 	// TODO: implement something useful
-	_, err := loadConfig(cli)
+	_, _, err := load(cli)
 	if err != nil {
 		return err
 	}

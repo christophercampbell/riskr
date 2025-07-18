@@ -114,7 +114,7 @@ func SubscribeDurable(
 	ctx context.Context,
 	js nats.JetStreamContext,
 	subj string,
-	durable string,
+	durableGroup string,
 	autoAck bool,
 	cb func(msg *nats.Msg),
 	opts ...nats.SubOpt,
@@ -123,7 +123,7 @@ func SubscribeDurable(
 	// Force durable + manual ack; caller can override via opts but we set sane defaults.
 	opts = append(
 		[]nats.SubOpt{
-			nats.Durable(durable),
+			nats.Durable(durableGroup),
 			nats.ManualAck(),
 			nats.DeliverNew(),  // start from new unless you want DeliverAll()
 			nats.AckExplicit(), // explicit ack policy (JS)

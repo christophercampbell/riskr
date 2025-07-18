@@ -96,6 +96,8 @@ func (s *Server) handleDecision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.log.Info("handling decision request", "subject", req.Subject, "tx_type", req.Tx.Type)
+
 	// Build synthetic TxEvent for rule eval
 	usd := decimal.NewFromFloat(req.Tx.USDValue)
 	te := &events.TxEvent{

@@ -12,16 +12,16 @@ clean:
 	rm -rf $(BINDIR)
 
 run-gateway: build
-	./$(BINDIR)/riskr run gateway -c ./configs/config.example.yaml
+	./$(BINDIR)/riskr -c ./configs/config.example.yaml gateway
 
 run-streamer: build
-	./$(BINDIR)/riskr run streamer -c ./configs/config.example.yaml
+	./$(BINDIR)/riskr -c ./configs/config.example.yaml streamer
 
 sim: build
-	./$(BINDIR)/riskr sim -c ./configs/config.example.yaml clean
+	./$(BINDIR)/riskr -c ./configs/config.example.yaml sim -s clean
 
 policy-apply: build
-	./$(BINDIR)/riskr policy apply -c ./configs/config.example.yaml -f ./configs/policy.example.yaml
+	./$(BINDIR)/riskr policy -c ./configs/config.example.yaml apply -f ./configs/policy.example.yaml
 
 fmt:
 	$(GO) fmt $(PKG)

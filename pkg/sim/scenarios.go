@@ -99,7 +99,7 @@ func simStructuring(ctx context.Context, nc *nats.Conn, logger log.Logger) error
 	return nil
 }
 
-func pubTx(nc *nats.Conn, logger log.Logger, user, acct string, addrs []string, asset, amount string, usd float64) error {
+func pubTx(nc *nats.Conn, _ log.Logger, user, acct string, addrs []string, asset, amount string, usd float64) error {
 	te := events.TxEvent{
 		SchemaVersion: events.SchemaVersion,
 		EventID:       randID(),
@@ -116,7 +116,7 @@ func pubTx(nc *nats.Conn, logger log.Logger, user, acct string, addrs []string, 
 		MaxFinality:   12,
 	}
 	b, _ := json.Marshal(te)
-	return nc.Publish(natsjs.SubjTxEvent+".SIM", b)
+	return nc.Publish(natsjs.SubjTxEvent, b)
 }
 
 // local helpers

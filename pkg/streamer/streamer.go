@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -21,6 +22,14 @@ import (
 	"github.com/christophercampbell/riskr/pkg/state"
 )
 
+const (
+	connName = "riskr-streamer"
+)
+
+func durableGroupName(task string) string {
+	return fmt.Sprintf("%s-%s", connName, task)
+}
+
 type Worker struct {
 	cfg           *config.Config
 	log           log.Logger
@@ -31,7 +40,8 @@ type Worker struct {
 }
 
 func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
-	nc, err := natsjs.Connect(ctx, cfg.NATS.URLs, nats.Name("riskr-streamer"))
+	logger.Info("starting streamer")
+	nc, err := natsjs.Connect(ctx, cfg.NATS.URLs, nats.Name(connName))
 	if err != nil {
 		return err
 	}
@@ -60,37 +70,47 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	}
 
 	// subscribe to policy apply
-	_, err = natsjs.SubscribeDurable(ctx, js, natsjs.SubjPolicyApply, "riskr_streamer_policy_apply", true, func(m *nats.Msg) {
+	policyApplyGroup := durableGroupName("policy-apply")
+	logger.Info("subscribing", "subject", natsjs.SubjPolicyApply, "group", policyApplyGroup)
+	policyApplySub, err := natsjs.SubscribeDurable(ctx, js, natsjs.SubjPolicyApply, policyApplyGroup, true, func(m *nats.Msg) {
 		var np policy.Policy
-		if err := json.Unmarshal(m.Data, &np); err != nil {
+		if err = json.Unmarshal(m.Data, &np); err != nil {
 			logger.Error("policy sub", "err", err)
 			return
 		}
 		logger.Info("policy update", "ver", np.Version)
 		w.rulez = rules.BuildRules(&np, sanctions, np.Params)
 		w.policyVersion = np.Version
+		// w.handlePolicyApply ...
 	})
 	if err != nil {
 		return err
 	}
+	defer policyApplySub.Unsubscribe()
 
 	// subscribe to tx events
-	_, err = natsjs.SubscribeDurable(ctx, js, natsjs.SubjTxEvent, "riskr_streamer_tx", true, func(m *nats.Msg) {
-		var te events.TxEvent
-		if err := te.Unmarshal(m.Data); err != nil {
-			logger.Error("tx unmarshal", "err", err)
-			return
-		}
-		w.handleTx(&te)
-	})
+	txGroup := durableGroupName("tx")
+	logger.Info("subscribing", "subject", natsjs.SubjTxEvent, "group", txGroup)
+	txSub, err := natsjs.SubscribeDurable(ctx, js, natsjs.SubjTxEvent, txGroup, true,
+		func(m *nats.Msg) {
+			var te events.TxEvent
+			if err = te.Unmarshal(m.Data); err != nil {
+				logger.Error("tx unmarshal", "err", err)
+				return
+			}
+			w.handleTx(&te)
+		})
 	if err != nil {
 		return err
 	}
+	defer txSub.Unsubscribe()
 
 	// subscribe to provisional decisions
-	_, err = natsjs.SubscribeDurable(ctx, js, natsjs.SubjDecisionProv, "riskr_streamer_decprov", true, func(m *nats.Msg) {
+	provDecGroup := durableGroupName("prov-dec")
+	logger.Info("subscribing", "subject", natsjs.SubjDecisionProv, "group", provDecGroup)
+	decProvSub, err := natsjs.SubscribeDurable(ctx, js, natsjs.SubjDecisionProv, provDecGroup, true, func(m *nats.Msg) {
 		var de events.DecisionEvent
-		if err := de.Unmarshal(m.Data); err != nil {
+		if err = de.Unmarshal(m.Data); err != nil {
 			logger.Error("prov unmarshal", "err", err)
 			return
 		}
@@ -99,12 +119,19 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	if err != nil {
 		return err
 	}
+	defer decProvSub.Unsubscribe()
 
 	<-ctx.Done()
 	return nil
 }
 
 func (w *Worker) handleTx(te *events.TxEvent) {
+	if msg, err := te.Marshal(); err != nil {
+		w.log.Error("failed to handle tx", "err", err)
+		return
+	} else {
+		w.log.Info("handling transaction", "tx", string(msg))
+	}
 	usd := te.USDDecimal()
 	// update state for streaming rules
 	w.state.AddTx(te.Subject.UserID, te.OccurredAt, usd)

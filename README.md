@@ -18,5 +18,5 @@ make run-gateway &
 make sim            # send sample tx events
 ```
 
-See `docs/` or project spec in side doc for architecture.
+TODO `docs/` for spec & architecture.
 

@@ -4,12 +4,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/urfave/cli/v2"
 	"os"
 
 	"github.com/christophercampbell/riskr/pkg/config"
 	"github.com/christophercampbell/riskr/pkg/log"
 	"github.com/christophercampbell/riskr/pkg/policy"
 )
+
+func runPolicy(cli *cli.Context) error {
+	return nil
+}
 
 func policyCmd(args []string) int {
 	if len(args) == 0 {

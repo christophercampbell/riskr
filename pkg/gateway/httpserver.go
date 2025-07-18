@@ -22,7 +22,7 @@ func serveHTTP(ctx context.Context, cfg *config.Config, logger log.Logger, srv *
 
 	errCh := make(chan error, 1)
 	go func() {
-		logger.Info("gateway listen", "addr", cfg.HTTP.ListenAddr)
+		logger.Info("gateway starting", "http", cfg.HTTP.ListenAddr)
 		errCh <- httpSrv.ListenAndServe()
 	}()
 

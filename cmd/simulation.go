@@ -4,12 +4,18 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/urfave/cli/v2"
 	"os"
 
 	"github.com/christophercampbell/riskr/pkg/config"
 	"github.com/christophercampbell/riskr/pkg/log"
 	"github.com/christophercampbell/riskr/pkg/sim"
 )
+
+func runSim(cli *cli.Context) error {
+	fmt.Println("starting simulation")
+	return nil
+}
 
 func simCmd(args []string) int {
 	fs := flag.NewFlagSet("sim", flag.ExitOnError)

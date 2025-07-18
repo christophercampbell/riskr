@@ -3,12 +3,14 @@ package config
 import (
 	"encoding/json"
 	"os"
+	"path"
 	"strings"
 
 	yaml "gopkg.in/yaml.v3"
 )
 
 type Config struct {
+	configRoot      string             // internal, do not serialize
 	LogLevel        string             `yaml:"log_level" json:"log_level"`
 	NATS            NATS               `yaml:"nats" json:"nats"`
 	HTTP            HTTP               `yaml:"http" json:"http"`
@@ -37,15 +39,8 @@ type Sanctions struct {
 	File string `yaml:"file" json:"file"`
 }
 
-func Load(path string) (*Config, error) {
-	if path == "" {
-		// env var fallback
-		path = os.Getenv("RISKR_CONFIG")
-	}
-	if path == "" {
-		path = defaultPath()
-	}
-	b, err := os.ReadFile(path)
+func Load(filepath string) (*Config, error) {
+	b, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +49,10 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 	applyEnvOverrides(&c)
-	return &c, nil
-}
 
-func defaultPath() string {
-	h, _ := os.UserHomeDir()
-	return h + "/.config/riskr/config.yaml"
+	// set the configRoot for relative path parsing uses
+	c.configRoot = path.Dir(filepath)
+	return &c, nil
 }
 
 func applyEnvOverrides(c *Config) {
@@ -75,4 +68,33 @@ func applyEnvOverrides(c *Config) {
 func (c *Config) JSON() string {
 	b, _ := json.MarshalIndent(c, "", "  ")
 	return string(b)
+}
+
+func (c *Config) PolicyFile() string {
+	filepath := c.Policy.File
+	if !path.IsAbs(filepath) {
+		filepath = path.Join(c.configRoot, filepath)
+	}
+	return filepath
+}
+
+func (c *Config) ReadSanctions() (map[string]struct{}, error) {
+	filepath := c.Sanctions.File
+	if !path.IsAbs(filepath) {
+		filepath = path.Join(c.configRoot, filepath)
+	}
+	b, err := os.ReadFile(filepath)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[string]struct{})
+	lines := strings.Split(string(b), "\n")
+	for _, ln := range lines {
+		ln = strings.TrimSpace(ln)
+		if ln == "" || strings.HasPrefix(ln, "#") {
+			continue
+		}
+		m[strings.ToLower(ln)] = struct{}{}
+	}
+	return m, nil
 }

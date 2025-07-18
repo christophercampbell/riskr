@@ -2,7 +2,6 @@
 log_level: info
 nats:
   urls: ["nats://localhost:4222"]
-  # auto stream creation toggles
   ensure_streams: true
 http:
   listen_addr: ":8080"
@@ -10,9 +9,10 @@ http:
   write_timeout_ms: 5000
 policy:
   # initial policy file path (used by gateway/streamer on startup)
-  file: "./configs/policy.example.yaml"
+  # if path is relative, it should be relative to this config file
+  file: "./policy.example.yaml"
 sanctions:
-  file: "./configs/sanctions.example.txt"
+  file: "./sanctions.example.txt"
 assets:
   # static USD conversion factors (MVP); use float or string
   USDC: 1.00

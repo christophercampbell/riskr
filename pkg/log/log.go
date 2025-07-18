@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+// TODO: implement with real underlying logger
+
 type Logger interface {
 	Debug(msg string, kv ...any)
 	Info(msg string, kv ...any)

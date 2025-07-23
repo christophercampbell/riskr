@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: "NATS Dashboards"
+    orgId: 1
+    folder: "NATS"
+    type: file
+    disableDeletion: false         # let you remove through the UI
+    allowUiUpdates: true           # enable on-the-fly edits
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards   # matches the volume you mounted

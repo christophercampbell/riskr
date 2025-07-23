@@ -1,7 +1,7 @@
 # Global riskr configuration (edit as needed)
 log_level: info
 nats:
-  urls: ["nats://localhost:4222"]
+  urls: ["nats://127.0.0.1:4222"]
   ensure_streams: true
 http:
   listen_addr: ":8080"

@@ -89,7 +89,7 @@ func Run(ctx context.Context, cfg *config.Config, logger log.Logger) error {
 	defer policyApplySub.Unsubscribe()
 
 	// subscribe to tx events
-	txGroup := durableGroupName("tx")
+	txGroup := durableGroupName("tx-process")
 	logger.Info("subscribing", "subject", natsjs.SubjTxEvent, "group", txGroup)
 	txSub, err := natsjs.SubscribeDurable(ctx, js, natsjs.SubjTxEvent, txGroup, true,
 		func(m *nats.Msg) {

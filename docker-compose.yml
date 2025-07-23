@@ -1,6 +1,18 @@
 services:
-  nats-server:
-    container_name: nats-server
+  postgres:
+    container_name: postgres
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: riskr
+      POSTGRES_USER: riskr
+      POSTGRES_PASSWORD: riskr
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+  nats:
+    container_name: nats
     image: nats:2.10-alpine
     command: ["-js", "-sd", "/data", "-m", "8222"]
     ports:
@@ -8,35 +20,46 @@ services:
       - "6222:6222"   # cluster
       - "8222:8222"   # monitoring
     volumes:
-      - nats-server-data:/data
+      - nats-data:/data
     depends_on:
       - postgres
 
-  nats-ui:
-    container_name: nats-ui
-    image: ghcr.io/nats-nui/nui:latest
+  nats-exporter:
+    image: natsio/prometheus-nats-exporter:0.17.3
+    container_name: nats-exporter
+    command: ["-varz", "-connz", "-routez", "-subz", "-jsz=all", "http://nats:8222"]
     ports:
-      - "31311:31311"
-    environment:
-      - NATS_URL=nats://nats-server:4222
-    volumes:
-      - nats-ui-data:/db
-    depends_on:
-      - nats-server
+      - "7777:7777" # prometheus scrapes here
+    depends_on: 
+      - nats
+    restart: unless-stopped
 
-  postgres:
-    container_name: riskr-db
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_PASSWORD: riskr
-      POSTGRES_USER: riskr
-      POSTGRES_DB: riskr
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
     ports:
-      - "5432:5432"
+      - "9090:9090"
     volumes:
-      - pg-data:/var/lib/postgresql/data
+      - ./configs/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - nats-exporter
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=changeme  # admin / changeme
+    volumes:
+      - ./configs/docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./configs/docker/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./configs/docker/grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
 
 volumes:
-  nats-server-data: {}
-  nats-ui-data: {}
+  nats-data: {}
   pg-data: {}

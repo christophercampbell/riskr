@@ -15,22 +15,18 @@ import (
 )
 
 const (
-	// --- JetStream Stream Names ---
-	StreamEvents = "RISKREVENTS"
-	StreamPolicy = "RISKRPOLICY"
+	StreamEvents    = "EVENTS"
+	StreamDecisions = "DECISIONS"
+	StreamPolicy    = "POLICY"
 
-	// --- Subject Wildcards captured by the Streams ---
-	SubjEventsWildcard = "riskr.events.>"
-	SubjDecisionsWild  = "riskr.decisions.>"
-	SubjPolicyWildcard = "riskr.policies.>"
+	SubjTxEvent = "riskr.events.tx"
 
-	// --- Canonical leaf subjects riskr publishes to ---
-	SubjTxEvent          = "riskr.events.tx"
 	SubjDecisionProv     = "riskr.decisions.provisional"
 	SubjDecisionFinal    = "riskr.decisions.final"
 	SubjDecisionOverride = "riskr.decisions.override"
-	SubjPolicyApply      = "riskr.policies.apply"   // CLI publishes new signed policy versions
-	SubjPolicyBroadcast  = "riskr.policies.current" // streamer rebroadcasts active policy payload
+
+	SubjPolicyApply     = "riskr.policies.apply"   // CLI publishes new signed policy versions
+	SubjPolicyBroadcast = "riskr.policies.current" // streamer rebroadcasts active policy payload
 )
 
 // Connect dials NATS and returns an *nats.Conn* bound to ctx lifetime.
@@ -67,7 +63,7 @@ func JetStream(nc *nats.Conn) (nats.JetStreamContext, error) {
 func Bootstrap(js nats.JetStreamContext) error {
 	eventsCfg := &nats.StreamConfig{
 		Name:      StreamEvents,
-		Subjects:  []string{SubjEventsWildcard, SubjDecisionsWild},
+		Subjects:  []string{SubjTxEvent},
 		Retention: nats.LimitsPolicy,
 		Storage:   nats.FileStorage,
 		NoAck:     false,
@@ -77,9 +73,21 @@ func Bootstrap(js nats.JetStreamContext) error {
 		return err
 	}
 
+	decisionsCfg := &nats.StreamConfig{
+		Name:      StreamDecisions,
+		Subjects:  []string{SubjDecisionProv, SubjDecisionFinal, SubjDecisionOverride},
+		Retention: nats.LimitsPolicy,
+		Storage:   nats.FileStorage,
+		NoAck:     false,
+		Replicas:  1,
+	}
+	if err := ensureStream(js, decisionsCfg); err != nil {
+		return err
+	}
+
 	policyCfg := &nats.StreamConfig{
 		Name:      StreamPolicy,
-		Subjects:  []string{SubjPolicyWildcard},
+		Subjects:  []string{SubjPolicyApply, SubjPolicyBroadcast},
 		Retention: nats.LimitsPolicy,
 		Storage:   nats.FileStorage,
 		NoAck:     false,

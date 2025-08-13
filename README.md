@@ -1,4 +1,4 @@
-# riskr
+# riskr WIP
 
 Compliance-aware streaming risk engine (crypto-only MVP) built on NATS JetStream.
 

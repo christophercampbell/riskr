@@ -18,5 +18,17 @@ make run-gateway &
 make sim            # send sample tx events
 ```
 
-TODO `docs/` for spec & architecture.
+TODO
 
+----
+
+`docs/` for spec & architecture (use adr-tools.
+
+The following code-block will be rendered as a Mermaid diagram:
+
+```mermaid
+flowchart LR
+  A --> B
+```
+
+For intellij install mermaid plugin, for GitHub it is supported already
